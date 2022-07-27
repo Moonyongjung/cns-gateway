@@ -1,0 +1,13 @@
+{
+    "gatewayServerPort":"12000",
+    "coinType":"60",
+    "chainId":"noname_9000-1",
+    "restEndpoint":"http://localhost:1317",
+    "rpcEndpoint":"http://localhost:26657",
+    "denom":"unom",
+    "contractPath":"./wasm/",
+    "contractName":"cnscontract.wasm",
+    "bech32Prefix":"noname",
+    "gasLimit":"1100000",
+    "feeAmount":"1100000000000000000"
+}

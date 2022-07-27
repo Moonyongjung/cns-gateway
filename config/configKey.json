@@ -1,0 +1,6 @@
+{
+    "keyStorePath":"./key/",
+    "keyStoreFilePath":"keystore/",
+    "keyOwnerName":"my",
+    "keyOwnerPw":"spdytest"
+}

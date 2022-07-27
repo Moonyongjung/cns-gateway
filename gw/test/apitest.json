@@ -1,0 +1,71 @@
+[
+    {
+        "bank/send" :{
+            "fromAddress":"a",
+            "toAddress":"noname1ldjrqy8w23ugyl6ejsp8nmveh89h50t2w0hm4z",
+            "amount":"100"
+        }
+    },
+    {
+        "wasm/instantiate":{
+            "codeId":"12",
+            "amount":"1000unom",
+            "label":"cns",
+            "initMsg":"{\"owner\":\"noname1qnzpr4znu049ydj7qfcu6x7hyjjsaa4fm4le8w\"}"
+        }
+    },
+    {
+        "wasm/execute":{
+            "contractAddress":"noname19h0d6k4mtxw5qjr0aretjy9kwyem0hxclf88ka2uwjn47e90mqrqk4tkjt",
+            "amount":"0unom",
+            "execMsg":"{\"save_domain_address_mapping\":{\"domain\":\"ctest\",\"account_address\":\"noname1hcsrtpq38yp68n6a2u9tnngrfw0rqdwydf5whq\"}}"
+        }
+    },
+    {
+        "wasm/query":{
+            "contractAddress":"noname19h0d6k4mtxw5qjr0aretjy9kwyem0hxclf88ka2uwjn47e90mqrqk4tkjt",
+            "queryMsg": "{\"domain_mapping\":{\"domain\":\"ctest\"}}"
+        }
+    },
+    {
+        "wasm/listcontractbycode":{
+            "codeId":"11"
+        }
+    },
+    {
+        "wasm/download":{
+            "codeId":"11",
+            "downloadFileName":"download"
+        }
+    },
+    {
+        "wasm/codeinfo":{
+            "codeId":"11"
+        }
+    },
+    {
+        "wasm/contractinfo":{
+            "contractAddress":"noname19h0d6k4mtxw5qjr0aretjy9kwyem0hxclf88ka2uwjn47e90mqrqk4tkjt"
+        }
+    },
+    {
+        "wasm/default-cns-instantiate":"METHOD GET"
+            
+    },
+    {
+        "wasm/cns-execute":{
+            "domainName":"ctest",
+            "accountAddress":"noname1qnzpr4znu049ydj7qfcu6x7hyjjsaa4fm4le8w"
+        }          
+    },
+    {
+        "wasm/cns-query-by-domain":{
+            "domainName":"ctest"            
+        }          
+    },
+    {
+        "wasm/cns-query-by-account":{
+            "accountAddress":"noname1qnzpr4znu049ydj7qfcu6x7hyjjsaa4fm4le8w"            
+        }          
+    }  
+]

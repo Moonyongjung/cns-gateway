@@ -1,0 +1,7 @@
+{
+    "dbUserName":"root",
+    "dbPassword":"spdytest",
+    "dbHost":"localhost",
+    "dbPort":"3306",
+    "databaseName":"cnsgateway"
+}
