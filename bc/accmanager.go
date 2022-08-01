@@ -16,7 +16,7 @@ type AccSequenceStruct struct {
 }
 
 func AccSequenceMng() *AccSequenceStruct {
-	accSequenceOnce.Do( func() {
+	accSequenceOnce.Do(func() {
 		accSequenceInstance = &AccSequenceStruct{}
 	})
 	return accSequenceInstance
@@ -35,8 +35,8 @@ func (n *AccSequenceStruct) AddAccSeq() {
 	accountSequence := n.AccountSequence
 	temp, err := strconv.Atoi(accountSequence)
 	if err != nil {
-		util.LogGw(err)
+		util.LogErr(err)
 	}
-	
-	n.AccountSequence = strconv.Itoa(temp+1)
+
+	n.AccountSequence = strconv.Itoa(temp + 1)
 }

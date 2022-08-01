@@ -1,19 +1,17 @@
 package client
 
 import (
-
-	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
 
-	"github.com/evmos/ethermint/crypto/hd"	
 	cmclient "github.com/cosmos/cosmos-sdk/client"
+	"github.com/evmos/ethermint/crypto/hd"
 )
 
 func SetClientUser() cmclient.Context {
 	rpcEndpoint := util.GetConfig().Get("rpcEndpoint")
 	chainId := util.GetConfig().Get("chainId")
-	encodingConfig := cns.MakeEncodingConfigEth()
-		
+	encodingConfig := MakeEncodingConfigEth()
+
 	clientCtx := cmclient.Context{}
 
 	//-- for using resolve wasm api, need to wasm's txconfig
@@ -30,7 +28,7 @@ func SetClientUser() cmclient.Context {
 	clientCtx = clientCtx.WithClient(client)
 
 	//-- To check code ID of contract, broadcast mode = block
-	clientCtx = clientCtx.WithBroadcastMode("block")	
-	
+	clientCtx = clientCtx.WithBroadcastMode("block")
+
 	return clientCtx
 }

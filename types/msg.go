@@ -3,28 +3,28 @@ package types
 
 type BankMsgStruct struct {
 	FromAddress string
-	ToAddress string
-	Amount string
+	ToAddress   string
+	Amount      string
 }
 
-type InstantiateMsgSturct struct {
-	CodeId string
-	Amount string
-	Label string
+type InstantiateMsgStruct struct {
+	CodeId  string
+	Amount  string
+	Label   string
 	InitMsg string
-	Admin string
+	Admin   string
 	NoAdmin string
 }
 
 type ExecuteMsgStruct struct {
 	ContractAddress string
-	Amount string
-	ExecMsg string
+	Amount          string
+	ExecMsg         string
 }
 
 type QueryMsgStruct struct {
 	ContractAddress string
-	QueryMsg string
+	QueryMsg        string
 }
 
 type ListContractByCodeMsgStruct struct {
@@ -32,7 +32,7 @@ type ListContractByCodeMsgStruct struct {
 }
 
 type DownloadMsgStruct struct {
-	CodeId string
+	CodeId           string
 	DownloadFileName string
 }
 
@@ -53,7 +53,7 @@ type ContractHistoryMsgStruct struct {
 }
 
 type HttpResponseStruct struct {
-	ResCode int `json:"resCode"`
-	ResMsg string `json:"resMsg"`
+	ResCode int    `json:"resCode"`
+	ResMsg  string `json:"resMsg"`
 	ResData string `json:"resData"`
 }

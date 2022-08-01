@@ -1,9 +1,8 @@
 package types
 
 var (
-	CoinType string
+	CoinType           string
 	FullFundraiserPath string
-	GatewayAccount string
+	GatewayAccount     string
 	SelectKeyAlgorithm string
 )
-

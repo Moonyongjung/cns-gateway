@@ -1,5 +1,5 @@
 //-- TODO Not use params.EncodingConfig.TxConfig, using wasmd EncodingConfig
-package types
+package client
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -9,9 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	enccodec "github.com/evmos/ethermint/encoding/codec"
 	"github.com/evmos/ethermint/app"
-
+	enccodec "github.com/evmos/ethermint/encoding/codec"
 )
 
 func MakeEncodingConfig() params.EncodingConfig {
@@ -21,11 +20,11 @@ func MakeEncodingConfig() params.EncodingConfig {
 
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Marshaler: codec,
-		TxConfig: tx.NewTxConfig(codec, tx.DefaultSignModes),
-		Amino: cdc,
+		Marshaler:         codec,
+		TxConfig:          tx.NewTxConfig(codec, tx.DefaultSignModes),
+		Amino:             cdc,
 	}
-	
+
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	simapp.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)

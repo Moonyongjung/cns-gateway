@@ -1,15 +1,15 @@
 package util
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	cns "github.com/Moonyongjung/cns-gw/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func SetChainPrefixConfig() {
 	// Bech32MainPrefix defines the main SDK Bech32 prefix of an account's address
-	var	Bech32MainPrefix = GetConfig().Get("bech32Prefix")
+	var Bech32MainPrefix = GetConfig().Get("bech32Prefix")
 	cns.CoinType = GetConfig().Get("coinType")
-	cns.FullFundraiserPath = "m/44'/"+cns.CoinType+"'/0'/0/0"
+	cns.FullFundraiserPath = "m/44'/" + cns.CoinType + "'/0'/0/0"
 
 	var (
 		// PrefixValidator is the prefix for validator keys
@@ -20,7 +20,7 @@ func SetChainPrefixConfig() {
 		PrefixPublic = "pub"
 		// PrefixOperator is the prefix for operator keys
 		PrefixOperator = "oper"
-	
+
 		// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
 		Bech32PrefixAccAddr = Bech32MainPrefix
 		// Bech32PrefixAccPub defines the Bech32 prefix of an account's public key

@@ -30,12 +30,12 @@ func ParseStoreCodeArgs(file string, sender sdk.AccAddress) (wasmtypes.MsgStoreC
 	} else if !ioutils.IsGzip(wasm) {
 		return wasmtypes.MsgStoreCode{}, fmt.Errorf("invalid input file. Use wasm binary or gzip")
 	}
-	
+
 	//-- Only sender is able to instantiate contract
 	//   Terminate everybody
 	var perm *wasmtypes.AccessConfig
 	x := wasmtypes.AccessTypeOnlyAddress.With(sender)
-	perm = &x	
+	perm = &x
 
 	msg := wasmtypes.MsgStoreCode{
 		Sender:                sender.String(),
@@ -46,14 +46,14 @@ func ParseStoreCodeArgs(file string, sender sdk.AccAddress) (wasmtypes.MsgStoreC
 }
 
 func ParseInstantiateArgs(
-	instantiateMsgData cns.InstantiateMsgSturct,	
+	instantiateMsgData cns.InstantiateMsgStruct,
 	sender sdk.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
-	
+
 	rawCodeID := instantiateMsgData.CodeId
 	if rawCodeID == "" {
 		return wasmtypes.MsgInstantiateContract{}, errors.New("No code ID")
 	}
-	
+
 	// get the id of the code to instantiate
 	codeID, err := strconv.ParseUint(rawCodeID, 10, 64)
 	if err != nil {
@@ -69,7 +69,7 @@ func ParseInstantiateArgs(
 		return wasmtypes.MsgInstantiateContract{}, fmt.Errorf("amount: %s", err)
 	}
 
-	label := instantiateMsgData.Label	
+	label := instantiateMsgData.Label
 	if label == "" {
 		return wasmtypes.MsgInstantiateContract{}, errors.New("label is required on all contracts")
 	}
@@ -82,7 +82,7 @@ func ParseInstantiateArgs(
 	adminStr := instantiateMsgData.Admin
 
 	noAdminBool := true
-	noAdminStr := instantiateMsgData.NoAdmin	
+	noAdminStr := instantiateMsgData.NoAdmin
 	if noAdminStr == "" || noAdminStr == "true" {
 		noAdminBool = true
 	} else if noAdminStr == "false" {
@@ -111,8 +111,8 @@ func ParseInstantiateArgs(
 	return msg, nil
 }
 
-func ParseExecuteArgs(executeMsgData cns.ExecuteMsgStruct, 
-	sender sdk.AccAddress) (wasmtypes.MsgExecuteContract, error){
+func ParseExecuteArgs(executeMsgData cns.ExecuteMsgStruct,
+	sender sdk.AccAddress) (wasmtypes.MsgExecuteContract, error) {
 	amountStr := executeMsgData.Amount
 	if amountStr == "" {
 		amountStr = "0"
@@ -130,67 +130,67 @@ func ParseExecuteArgs(executeMsgData cns.ExecuteMsgStruct,
 	}, nil
 }
 
-func ParseQueryArgs(queryMsgData cns.QueryMsgStruct, 
+func ParseQueryArgs(queryMsgData cns.QueryMsgStruct,
 	sender sdk.AccAddress) (wasmtypes.QuerySmartContractStateRequest, error) {
-		decoder := newArgDecoder(asciiDecodeString)
+	decoder := newArgDecoder(asciiDecodeString)
 
-		queryData, err := decoder.DecodeString(queryMsgData.QueryMsg)
-		if err != nil {
-			return wasmtypes.QuerySmartContractStateRequest{}, errors.New(err.Error())
-		}
-
-		return wasmtypes.QuerySmartContractStateRequest {
-			Address: queryMsgData.ContractAddress,
-			QueryData: queryData,
-		}, nil
+	queryData, err := decoder.DecodeString(queryMsgData.QueryMsg)
+	if err != nil {
+		return wasmtypes.QuerySmartContractStateRequest{}, errors.New(err.Error())
 	}
 
-func ParseListcodeArgs() wasmtypes.QueryCodesRequest{
+	return wasmtypes.QuerySmartContractStateRequest{
+		Address:   queryMsgData.ContractAddress,
+		QueryData: queryData,
+	}, nil
+}
+
+func ParseListcodeArgs() wasmtypes.QueryCodesRequest {
 	return wasmtypes.QueryCodesRequest{
 		Pagination: defaultPagination(),
 	}
 }
 
-func ParseListContractByCodeArgs(listContractByCodeMsgData cns.ListContractByCodeMsgStruct) wasmtypes.QueryContractsByCodeRequest{
+func ParseListContractByCodeArgs(listContractByCodeMsgData cns.ListContractByCodeMsgStruct) wasmtypes.QueryContractsByCodeRequest {
 	return wasmtypes.QueryContractsByCodeRequest{
-		CodeId: util.FromStringToUint64(listContractByCodeMsgData.CodeId),
+		CodeId:     util.FromStringToUint64(listContractByCodeMsgData.CodeId),
 		Pagination: defaultPagination(),
 	}
 }
 
-func ParseDownloadArgs(downloadMsgData cns.DownloadMsgStruct) wasmtypes.QueryCodeRequest{
-	return wasmtypes.QueryCodeRequest {
+func ParseDownloadArgs(downloadMsgData cns.DownloadMsgStruct) wasmtypes.QueryCodeRequest {
+	return wasmtypes.QueryCodeRequest{
 		CodeId: util.FromStringToUint64(downloadMsgData.CodeId),
 	}
 }
 
-func ParseCodeInfoArgs(codeInfoMsgData cns.CodeInfoMsgStruct) wasmtypes.QueryCodeRequest{
-	return wasmtypes.QueryCodeRequest {
+func ParseCodeInfoArgs(codeInfoMsgData cns.CodeInfoMsgStruct) wasmtypes.QueryCodeRequest {
+	return wasmtypes.QueryCodeRequest{
 		CodeId: util.FromStringToUint64(codeInfoMsgData.CodeId),
 	}
 }
 
-func ParseContractInfoArgs(contractInfoMsgData cns.ContractInfoMsgStruct) wasmtypes.QueryContractInfoRequest{
+func ParseContractInfoArgs(contractInfoMsgData cns.ContractInfoMsgStruct) wasmtypes.QueryContractInfoRequest {
 	return wasmtypes.QueryContractInfoRequest{
 		Address: contractInfoMsgData.ContractAddress,
 	}
 }
 
-func ParseContractStateAllArgs(contractStateAllMsgData cns.ContractStateAllMsgStruct) wasmtypes.QueryAllContractStateRequest{
+func ParseContractStateAllArgs(contractStateAllMsgData cns.ContractStateAllMsgStruct) wasmtypes.QueryAllContractStateRequest {
 	return wasmtypes.QueryAllContractStateRequest{
-		Address: contractStateAllMsgData.ContractAddress,
+		Address:    contractStateAllMsgData.ContractAddress,
 		Pagination: defaultPagination(),
 	}
 }
 
-func ParseContractHistoryArgs(contractHistoryMsgData cns.ContractHistoryMsgStruct) wasmtypes.QueryContractHistoryRequest{
+func ParseContractHistoryArgs(contractHistoryMsgData cns.ContractHistoryMsgStruct) wasmtypes.QueryContractHistoryRequest {
 	return wasmtypes.QueryContractHistoryRequest{
-		Address: contractHistoryMsgData.ContractAddress,
+		Address:    contractHistoryMsgData.ContractAddress,
 		Pagination: defaultPagination(),
 	}
 }
 
-func ParsePinnedArgs() wasmtypes.QueryPinnedCodesRequest{
+func ParsePinnedArgs() wasmtypes.QueryPinnedCodesRequest {
 	return wasmtypes.QueryPinnedCodesRequest{
 		Pagination: defaultPagination(),
 	}

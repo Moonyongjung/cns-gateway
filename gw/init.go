@@ -1,27 +1,26 @@
 package gw
 
 import (
-	"database/sql"
-
 	cns "github.com/Moonyongjung/cns-gw/types"
+	"github.com/Moonyongjung/cns-gw/util"
 )
 
-func HttpServerInit(channel cns.ChannelStruct, db *sql.DB) {
-	httpResponseInit()
-	go RunHttpServer(channel, db)
+func HttpServerInit(channel cns.ChannelStruct) {
+	util.HttpResponseInit()
+	go RunHttpServer(channel)
 	for {
 		select {
-			case txRes := <- channel.TxResponseChan:
-				res := httpResponseByte(int(txRes.Code), txRes.RawLog)
-				channel.HttpServerChan <- res
+		case txRes := <-channel.TxResponseChan:
+			res := util.HttpResponseByte(int(txRes.Code), txRes.RawLog, txRes.Data)
+			channel.HttpServerChan <- res
 
-			case queryRes := <- channel.QueryResponseChan:				
-				res := httpResponseByte(0, queryRes)
-				channel.HttpServerChan <- res
-			
-			case err := <- channel.ErrorChan:
-				res := httpResponseByte(err.ResCode, err.ResData)
-				channel.HttpServerChan <- res
+		case queryRes := <-channel.QueryResponseChan:
+			res := util.HttpResponseByte(0, queryRes, "")
+			channel.HttpServerChan <- res
+
+		case err := <-channel.ErrorChan:
+			res := util.HttpResponseByte(err.ResCode, err.ResMsg, err.ResData)
+			channel.HttpServerChan <- res
 		}
 	}
 }

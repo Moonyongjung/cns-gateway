@@ -1,16 +1,13 @@
-package gw
+package util
 
 import (
 	cns "github.com/Moonyongjung/cns-gw/types"
-	"github.com/Moonyongjung/cns-gw/util"
 )
 
 //-- Response code
 //   If response code is not included in below response code, it is Cosmos SDK or Wasm code
 
-
-
-func httpResponseInit() {
+func HttpResponseInit() {
 	cns.ResponseType = make(map[int]string)
 
 	cns.ResponseType[0] = "Success"
@@ -26,18 +23,27 @@ func httpResponseInit() {
 	cns.ResponseType[111] = "No domain name"
 }
 
-func httpResponseByte(resCode int, resData string) ([]byte) {
-	
-	var httpResponse cns.HttpResponseStruct
-
-	httpResponse.ResCode = resCode
-	httpResponse.ResMsg = cns.ResponseType[resCode]
-	httpResponse.ResData = resData
-
-	responseByte, err := util.JsonMarshalData(httpResponse)
+func HttpResponseByte(resCode int, resMsg string, resData string) []byte {
+	httpResponse := HttpResponseTypeStruct(resCode, resMsg, resData)
+	responseByte, err := JsonMarshalData(httpResponse)
 	if err != nil {
-		util.LogGw(err)
+		LogErr(err)
 	}
 
 	return responseByte
+}
+
+func HttpResponseTypeStruct(resCode int, resMsg string, resData string) cns.HttpResponseStruct {
+	var httpResponse cns.HttpResponseStruct
+
+	httpResponse.ResCode = resCode
+	if resMsg == "" {
+		httpResponse.ResMsg = cns.ResponseType[resCode]
+	} else {
+		httpResponse.ResMsg = resMsg
+	}
+
+	httpResponse.ResData = resData
+
+	return httpResponse
 }

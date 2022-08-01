@@ -8,8 +8,8 @@ var acconce sync.Once
 var accInstance *ConfigAcc
 
 type ConfigAcc struct {
-	AccountNumber    string
-	AccountSequence  string	
+	AccountNumber   string
+	AccountSequence string
 }
 
 func GetConfigAcc() *ConfigAcc {

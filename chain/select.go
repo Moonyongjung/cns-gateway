@@ -23,9 +23,9 @@ func SelectChainType() string {
 		util.LogGw("                                                                       ")
 		util.LogGw("y. Use includes ethermint module, N. general Cosmos SDK based chain    ")
 		util.LogGw("=======================================================================")
-	
+
 		fmt.Scan(&s)
-	
+
 		if s == "y" {
 			return "eth_secp256k1"
 		} else if s == "N" {
@@ -37,10 +37,10 @@ func SelectChainType() string {
 }
 
 //-- Save chain's key algorithm
-func SaveChainType(keyStorePath string, algo string, algoFileName string) {	
-	
+func SaveChainType(keyStorePath string, algo string, algoFileName string) {
+
 	err := ioutil.WriteFile(keyStorePath+algoFileName, []byte(algo), 0660)
 	if err != nil {
-		util.LogGw(err)			
+		util.LogErr(err)
 	}
 }

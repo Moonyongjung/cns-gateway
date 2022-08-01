@@ -27,10 +27,10 @@ func (i *ImportKey) Set(
 	i.PubArmor = PubArmor
 }
 
-func (i *ImportKey) GetPriKey() (string) {
+func (i *ImportKey) GetPriKey() string {
 	return i.PriArmor
 }
 
-func (i *ImportKey) GetPubKey() (string) {
+func (i *ImportKey) GetPubKey() string {
 	return i.PubArmor
 }

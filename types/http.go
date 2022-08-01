@@ -7,17 +7,16 @@ type CreateMnemonicResponse struct {
 }
 
 type AddressResponse struct {
-	ResMsg string
+	ResMsg     string
 	DirectPage string
 }
 
 type DomainMappingResponse struct {
-	ResMsg string
+	ResMsg     string
 	DirectPage string
 }
 
 type DomainMappingRequest struct {
-	DomainName string `json:"domainName`
+	DomainName     string `json:"domainName`
 	AccountAddress string `json:"accountAddress"`
 }
-

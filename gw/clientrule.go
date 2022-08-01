@@ -7,28 +7,28 @@ import (
 	"github.com/Moonyongjung/cns-gw/bc/rest"
 	"github.com/Moonyongjung/cns-gw/client"
 	"github.com/Moonyongjung/cns-gw/contract"
-	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/msg"
+	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
 
 	"github.com/mitchellh/mapstructure"
 )
 
-func DomainMapping(userAccount string) []byte {	
+func DomainMapping(userAccount string) []byte {
 
 	if userAccount != "" {
 		isExist := alreadyAccountMappingCheck([]byte(userAccount))
 		if isExist {
-			responseByte := httpResponseByte(108, "")		
+			responseByte := util.HttpResponseByte(108, "", "")
 			return responseByte
 
 		} else {
-			responseByte := httpResponseByte(0, userAccount)
+			responseByte := util.HttpResponseByte(0, "", userAccount)
 			return responseByte
 		}
-		
+
 	} else {
-		responseData := httpResponseByte(109, "")		
+		responseData := util.HttpResponseByte(109, "", "")
 		return responseData
 	}
 }
@@ -40,38 +40,33 @@ func DomainConfirm(requestData string) []byte {
 
 	isExist := domainExistCheck([]byte(domainName))
 	if isExist {
-		responseByte := httpResponseByte(107, "")
+		responseByte := util.HttpResponseByte(107, "", "")
 		return responseByte
 
 	} else {
-
-		gatewayServerPort := util.GetConfig().Get("gatewayServerPort")		
-		
-		util.LogGw(userAccount)
-		util.LogGw(domainName)
-	
+		gatewayServerPort := util.GetConfig().Get("gatewayServerPort")
 		url := "http://localhost:" + gatewayServerPort + "/api/wasm/cns-execute"
 		domainMappingRequest := cns.DomainMappingRequest{
-			DomainName: domainName,
+			DomainName:     domainName,
 			AccountAddress: userAccount,
 		}
 		jsonData, err := util.JsonMarshalData(domainMappingRequest)
 		if err != nil {
-			util.LogGw(err)
+			util.LogErr(err)
 		}
-	
+
 		responseBody := rest.HttpClient("POST", url, jsonData)
-		util.LogGw(string(responseBody))	
-	
+		util.LogGw(string(responseBody))
+
 		var httpResponseStruct cns.HttpResponseStruct
 		httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
 		mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
 
 		responseByte, err := util.JsonMarshalData(httpResponseStruct)
 		if err != nil {
-			util.LogGw(err)
-		}			
-	
+			util.LogErr(err)
+		}
+
 		return responseByte
 	}
 }
@@ -83,16 +78,11 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 
 	isExist := domainExistCheck([]byte(domainName))
 	if !isExist {
-		responseByte := httpResponseByte(111, "")
+		responseByte := util.HttpResponseByte(111, "", "")
 		return responseByte
 
 	} else {
-		gatewayServerPort := util.GetConfig().Get("gatewayServerPort")		
-		
-		
-		util.LogGw(domainName)
-		util.LogGw(amount)
-	
+		gatewayServerPort := util.GetConfig().Get("gatewayServerPort")
 		url := "http://localhost:" + gatewayServerPort + "/api/wasm/cns-query-by-domain"
 		domainMappingRequest := cns.DomainMappingRequest{
 			DomainName: domainName,
@@ -100,24 +90,25 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 		}
 		jsonData, err := util.JsonMarshalData(domainMappingRequest)
 		if err != nil {
-			util.LogGw(err)
+			util.LogErr(err)
 		}
-	
+
 		responseBody := rest.HttpClient("POST", url, jsonData)
-		util.LogGw("Send inquiry, domain check :", string(responseBody))	
-	
+		util.LogGw("Send inquiry, domain check :", string(responseBody))
+
 		var httpResponseStruct cns.HttpResponseStruct
 		httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
 		mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
 
 		if httpResponseStruct.ResCode != 0 {
-			responseByte := httpResponseByte(111, "")		
+			responseByte := util.HttpResponseByte(111, "", "")
 			return responseByte
 		} else {
 			userClient := client.SetClientUser()
 			pk := util.GetPriKeyByArmor(pkArmor)
 			fromAddr := util.GetAddrByPrivKey(pk)
-			accNum, _, _ := rest.GetAccountInfoHttpClient(fromAddr.String())			
+			accNum, _, _ := rest.GetAccountInfoHttpClient(fromAddr.String())
+			var contractMsg msg.ContractMsg
 
 			splitData := strings.Split(httpResponseStruct.ResData, ":")
 			convertStr := strings.Replace(splitData[2], "\"", "", -1)
@@ -125,23 +116,21 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 
 			bankMsgStruct := cns.BankMsgStruct{
 				FromAddress: fromAddr.String(),
-				ToAddress: toAddr,
-				Amount: amount,
-			}						
+				ToAddress:   toAddr,
+				Amount:      amount,
+			}
 
-			msg, err := msg.MakeBankMsg(bankMsgStruct)		
+			contractMsg.BankMsg = bankMsgStruct
+			msg, err := contractMsg.MakeBankMsg()
 			if err != nil {
-				util.LogGw(err)
+				util.LogErr(err)
 			}
 
 			_, httpResponse := bc.TxCreate(pk, accNum, userClient, msg, "bank")
-			
-			responseByte, err := util.JsonMarshalData(httpResponse)
-			if err != nil {
-				util.LogGw(err)
-			}
 
-			return responseByte			
+			responseByte := util.HttpResponseByte(httpResponse.ResCode, httpResponse.ResMsg, httpResponse.ResData)
+
+			return responseByte
 		}
 	}
 }
@@ -156,24 +145,21 @@ func domainExistCheck(requestData []byte) bool {
 
 	jsonData, err := util.JsonMarshalData(domainMappingRequest)
 	if err != nil {
-		util.LogGw(err)
+		util.LogErr(err)
 	}
 
 	queryMsgData := contract.CnsContractQueryDomainMsg(jsonData)
 	queryMsgDataJson, err := util.JsonMarshalData(queryMsgData)
 	if err != nil {
-		util.LogGw(err)
+		util.LogErr(err)
 	}
-
-	util.LogGw(queryMsgData.ContractAddress)
-	util.LogGw(queryMsgData.QueryMsg)
 
 	responseBody := rest.HttpClient("POST", url, queryMsgDataJson)
 	util.LogGw("Domain exist check : ", string(responseBody))
 
 	var httpResponseStruct cns.HttpResponseStruct
 	httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
-	mapstructure.Decode(httpResponseStructData, &httpResponseStruct)	
+	mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
 
 	if httpResponseStruct.ResCode == 0 {
 		return true
@@ -192,13 +178,13 @@ func alreadyAccountMappingCheck(requestData []byte) bool {
 
 	jsonData, err := util.JsonMarshalData(domainMappingRequest)
 	if err != nil {
-		util.LogGw(err)
+		util.LogErr(err)
 	}
 
 	queryMsgData := contract.CnsContractQueryAccountMsg(jsonData)
 	queryMsgDataJson, err := util.JsonMarshalData(queryMsgData)
 	if err != nil {
-		util.LogGw(err)
+		util.LogErr(err)
 	}
 
 	responseBody := rest.HttpClient("POST", url, queryMsgDataJson)
