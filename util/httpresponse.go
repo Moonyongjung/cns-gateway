@@ -2,6 +2,7 @@ package util
 
 import (
 	cns "github.com/Moonyongjung/cns-gw/types"
+	"github.com/mitchellh/mapstructure"
 )
 
 //-- Response code
@@ -21,6 +22,7 @@ func HttpResponseInit() {
 	cns.ResponseType[109] = "No user Account"
 	cns.ResponseType[110] = "No session, input mnemonic"
 	cns.ResponseType[111] = "No domain name"
+	cns.ResponseType[112] = "This account has no any coin"
 }
 
 func HttpResponseByte(resCode int, resMsg string, resData string) []byte {
@@ -46,4 +48,12 @@ func HttpResponseTypeStruct(resCode int, resMsg string, resData string) cns.Http
 	httpResponse.ResData = resData
 
 	return httpResponse
+}
+
+func HttpResonseByteToStruct(byteData []byte) cns.HttpResponseStruct {
+	var httpResponseStruct cns.HttpResponseStruct
+	httpResponseStructData := JsonUnmarshalData(httpResponseStruct, byteData)
+	mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
+
+	return httpResponseStruct
 }

@@ -59,7 +59,6 @@ func UserNewKey(mnemonic string) (string, string, string) {
 		return err.Error(), "redirect", ""
 	}
 
-	// priv, err := kr.ExportPrivKeyArmorByAddress(info.GetAddress(), keyOwnerPw)
 	priv, err := kr.ExportPrivKeyArmor(keyOwnerName, keyOwnerPw)
 	if err != nil {
 		util.LogErr(err)

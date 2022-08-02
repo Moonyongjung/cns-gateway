@@ -11,9 +11,6 @@ import (
 )
 
 func TxInit(channel cns.ChannelStruct, clientCtx cmclient.Context) {
-	//-- Cosmos SDK client init
-	// clientCtx := client.SetClient()
-
 	//-- Get Private key and GW address
 	priv := util.GetPriKeyByArmor(key.GwKey().GetPriKey())
 	gwAdd := util.GetAddrByPrivKey(priv)

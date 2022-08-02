@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	cnsdb "github.com/Moonyongjung/cns-gw/db"
-	"github.com/Moonyongjung/cns-gw/key"
+	"github.com/Moonyongjung/cns-gw/msg"
 	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
 )
@@ -19,8 +19,7 @@ func doResponsebyClientRequest(
 	var body []byte
 	var returnWriter http.ResponseWriter
 	var returnData []byte
-
-	db := cns.Db
+	var clientRes msg.CnsClientParse
 
 	checkRequest(request)
 	reqType := strings.TrimLeft(request.URL.Path, cns.ClientApiVersion)
@@ -35,110 +34,72 @@ func doResponsebyClientRequest(
 	}
 
 	if reqType == cns.WalletCreate {
-		var createMnemonicResponse cns.CreateMnemonicResponse
-		createMnemonicResponse.Mnemonic = key.UserNewMnemonic()
-		responseData, err := util.JsonMarshalData(createMnemonicResponse)
-		if err != nil {
-			util.LogErr(err)
-		}
-
-		returnWriter = w
-		returnData = responseData
+		returnWriter, returnData = clientRes.ResList(reqType, w, nil)
 
 	} else if reqType == cns.WalletAddress {
+		returnWriter, returnData = clientRes.ResList(reqType, w, body)
 
-		util.LogGw("From client request body : ", string(body))
-
-		var addressResponse cns.AddressResponse
-		resMsg, redirectPage, pk := key.UserNewKey(string(body))
-		addressResponse.ResMsg = resMsg
-		addressResponse.DirectPage = redirectPage
-
-		w = cnsdb.UserKeySessionDb(w, db, pk)
-
-		responseData, err := util.JsonMarshalData(addressResponse)
-		if err != nil {
-			util.LogErr(err)
-		}
-
-		returnWriter = w
-		returnData = responseData
 	} else if reqType == cns.DomainMapping {
 
 		if string(body) != "" {
 			util.LogGw("From client request body: ", string(body))
-			responseData := DomainMapping(string(body))
+			returnWriter, returnData = w, DomainMapping(string(body))
 
-			returnWriter = w
-			returnData = responseData
 		} else {
-			cookie, err := request.Cookie("session")
-			if err != nil {
-				util.LogErr("cookie read err : ", err)
-
-				returnWriter = w
-				returnData = util.HttpResponseByte(110, "", "")
-
-			} else {
-				pk := cnsdb.CheckSession(db, cookie.Value)
-
-				if pk == "" {
-					returnWriter = w
-					returnData = util.HttpResponseByte(110, "", "")
-				} else {
-					returnWriter = w
-					returnData = DomainMapping(util.GetAddrByPrivKeyArmor(pk).String())
-				}
-			}
+			returnWriter, returnData = returnValuewithCookie(reqType, request, w, body)
 		}
 
 	} else if reqType == cns.DomainConfirm {
 		util.LogGw("From client request body: ", string(body))
-		responseData := DomainConfirm(string(body))
+		returnWriter, returnData = w, DomainConfirm(string(body))
 
-		returnWriter = w
-		returnData = responseData
 	} else if reqType == cns.SendIndex {
-		cookie, err := request.Cookie("session")
-		if err != nil {
-			util.LogErr("cookie read err : ", err)
+		returnWriter, returnData = returnValuewithCookie(reqType, request, w, body)
 
-			returnWriter = w
-			returnData = util.HttpResponseByte(110, "", "")
-
-		} else {
-			pk := cnsdb.CheckSession(db, cookie.Value)
-
-			if pk == "" {
-				returnWriter = w
-				returnData = util.HttpResponseByte(110, "", "")
-			} else {
-				returnWriter = w
-				returnData = util.HttpResponseByte(0, "", util.GetAddrByPrivKeyArmor(pk).String())
-			}
-		}
 	} else if reqType == cns.SendInquiry {
-		cookie, err := request.Cookie("session")
-		if err != nil {
-			util.LogErr("cookie read err : ", err)
-
-			returnWriter = w
-			returnData = util.HttpResponseByte(110, "", "")
-
-		} else {
-			pk := cnsdb.CheckSession(db, cookie.Value)
-
-			if pk == "" {
-				returnWriter = w
-				returnData = util.HttpResponseByte(110, "", "")
-			} else {
-				responseByte := SendInquiry(string(body), pk)
-
-				returnWriter = w
-				returnData = responseByte
-			}
-		}
+		returnWriter, returnData = returnValuewithCookie(reqType, request, w, body)
 	}
 
 	return returnWriter, returnData
+}
+
+func clientParseErrReturn(
+	err error,
+	w http.ResponseWriter) (http.ResponseWriter, []byte) {
+
+	util.LogErr("ERROR, ", err)
+	response := util.HttpResponseByte(110, "", err.Error())
+
+	return w, response
+}
+
+func returnValuewithCookie(
+	reqType string,
+	request *http.Request,
+	w http.ResponseWriter,
+	body []byte) (http.ResponseWriter, []byte) {
+
+	var returnNormalByte []byte
+	db := cns.Db
+	cookie, err := request.Cookie("session")
+	if err != nil {
+		util.LogErr("cookie read err : ", err)
+		return clientParseErrReturn(err, w)
+	} else {
+		pk := cnsdb.CheckSession(db, cookie.Value)
+
+		if pk == "" {
+			return clientParseErrReturn(err, w)
+		} else {
+			if reqType == cns.DomainMapping {
+				returnNormalByte = DomainMapping(util.GetAddrByPrivKeyArmor(pk).String())
+			} else if reqType == cns.SendIndex {
+				returnNormalByte = util.HttpResponseByte(0, "", util.GetAddrByPrivKeyArmor(pk).String())
+			} else if reqType == cns.SendInquiry {
+				returnNormalByte = SendInquiry(string(body), pk)
+			}
+
+			return w, returnNormalByte
+		}
+	}
 }

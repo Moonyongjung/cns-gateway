@@ -7,14 +7,15 @@ import (
 
 	"github.com/Moonyongjung/cns-gw/contract"
 	"github.com/Moonyongjung/cns-gw/msg"
-	"github.com/Moonyongjung/cns-gw/types"
 	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
+
+	wasm "github.com/CosmWasm/wasmd/x/wasm/types"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 func doTransactionbyType(request *http.Request, channel cns.ChannelStruct) {
 	var body []byte
-	var response cns.HttpResponseStruct
 	var c msg.ContractMsg
 
 	checkRequest(request)
@@ -23,138 +24,82 @@ func doTransactionbyType(request *http.Request, channel cns.ChannelStruct) {
 	if request.Method == "POST" {
 		bodyByte, err := ioutil.ReadAll(request.Body)
 		if err != nil {
-			httpParseErrReturn(err, response, channel)
+			httpParseErrReturn(err, channel)
 		}
 		body = bodyByte
 	}
 
 	if reqType == cns.BankSend {
 		msg, err := c.MsgConvert(body, reqType).MakeBankMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.BankMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmStore {
 		msg, err := c.MakeStoreMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.StoreMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmInstantiate {
 		msg, err := c.MsgConvert(body, reqType).MakeInstantiateMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.InstantiateMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.CnsWasmInstantiate {
 		c.InstantiateMsg = contract.DefaultCnsContractInstantiateMsg()
-
 		msg, err := c.MakeInstantiateMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.InstantiateMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmExecute {
 		msg, err := c.MsgConvert(body, reqType).MakeExecuteMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ExecuteMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.CnsWasmExecute {
 		c.ExecuteMsg = contract.CnsContractExecuteMsg(body)
-
 		msg, err := c.MakeExecuteMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ExecuteMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmQuery {
 		msg, err := c.MsgConvert(body, reqType).MakeQueryMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.QueryMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.CnsWasmQueryByDomain {
 		c.QueryMsg = contract.CnsContractQueryDomainMsg(body)
-
 		msg, err := c.MakeQueryMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.QueryMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.CnsWasmQueryByAccount {
 		c.QueryMsg = contract.CnsContractQueryAccountMsg(body)
-
 		msg, err := c.MakeQueryMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.QueryMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmListCode {
 		msg, err := c.MakeListcodeMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ListcodeMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmListContractByCode {
 		msg, err := c.MsgConvert(body, reqType).MakeListContractByCodeMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ListContractByCodeMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmDownload {
 		msg, err := c.MsgConvert(body, reqType).MakeDownloadMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.DownloadMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmCodeInfo {
 		msg, err := c.MsgConvert(body, reqType).MakeCodeInfoMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.CodeInfoMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmContractInfo {
 		msg, err := c.MsgConvert(body, reqType).MakeContractInfoMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ContractInfoMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmContractStateAll {
 		msg, err := c.MsgConvert(body, reqType).MakeContractStateAllMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ContractStateAllMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmContractHistory {
 		msg, err := c.MsgConvert(body, reqType).MakeContractHistoryMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.ContractHistoryMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
+
 	} else if reqType == cns.WasmPinned {
 		msg, err := c.MakePinnedMsg()
-		if err != nil {
-			httpParseErrReturn(err, response, channel)
-		} else {
-			channel.PinnedMsgSendChan <- msg
-		}
+		returnDataUsingChannel(err, reqType, channel, msg)
 	}
 }
 
@@ -164,10 +109,72 @@ func checkRequest(request *http.Request) {
 }
 
 func httpParseErrReturn(err error,
-	response cns.HttpResponseStruct,
-	channel types.ChannelStruct) {
+	channel cns.ChannelStruct) {
 
 	util.LogErr("ERROR, ", err)
-	response = util.HttpResponseTypeStruct(106, "", err.Error())
+	response := util.HttpResponseTypeStruct(106, "", err.Error())
 	channel.ErrorChan <- response
+}
+
+func returnDataUsingChannel(err error,
+	reqType string,
+	channel cns.ChannelStruct,
+	msg interface{}) {
+
+	if err != nil {
+		httpParseErrReturn(err, channel)
+	} else {
+		if reqType == cns.BankSend {
+			msgConv := msg.(*bank.MsgSend)
+			channel.BankMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmStore {
+			msgConv := msg.(wasm.MsgStoreCode)
+			channel.StoreMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmInstantiate || reqType == cns.CnsWasmInstantiate {
+			msgConv := msg.(wasm.MsgInstantiateContract)
+			channel.InstantiateMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmExecute || reqType == cns.CnsWasmExecute {
+			msgConv := msg.(wasm.MsgExecuteContract)
+			channel.ExecuteMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmQuery || reqType == cns.CnsWasmQueryByDomain || reqType == cns.CnsWasmQueryByAccount {
+			msgConv := msg.(wasm.QuerySmartContractStateRequest)
+			channel.QueryMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmListCode {
+			msgConv := msg.(wasm.QueryCodesRequest)
+			channel.ListcodeMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmListContractByCode {
+			msgConv := msg.(wasm.QueryContractsByCodeRequest)
+			channel.ListContractByCodeMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmDownload {
+			msgConv := msg.([]interface{})
+			channel.DownloadMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmCodeInfo {
+			msgConv := msg.(wasm.QueryCodeRequest)
+			channel.CodeInfoMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmContractInfo {
+			msgConv := msg.(wasm.QueryContractInfoRequest)
+			channel.ContractInfoMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmContractStateAll {
+			msgConv := msg.(wasm.QueryAllContractStateRequest)
+			channel.ContractStateAllMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmContractHistory {
+			msgConv := msg.(wasm.QueryContractHistoryRequest)
+			channel.ContractHistoryMsgSendChan <- msgConv
+
+		} else if reqType == cns.WasmPinned {
+			msgConv := msg.(wasm.QueryPinnedCodesRequest)
+			channel.PinnedMsgSendChan <- msgConv
+		}
+	}
 }

@@ -1,27 +1,15 @@
 package contract
 
 import (
+	"github.com/Moonyongjung/cns-gw/msg"
 	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
-	"github.com/mitchellh/mapstructure"
 )
 
-//-- Saved contract code ID format
-type contractCodeJsonStruct struct {
-	TypeName string
-	CodeId   string
-}
-
-//-- Save contract address format
-type contractAddressJsonStruct struct {
-	TypeName        string
-	ContractAddress string
-	CodeType        string
-	CodeId          string
-}
+var cnsClientParse msg.CnsClientParse
 
 func StoreContractCode(typeName string, codeId string) {
-	jsonData := contractCodeJsonStruct{
+	jsonData := cns.ContractCodeJsonStruct{
 		TypeName: typeName,
 		CodeId:   codeId,
 	}
@@ -33,7 +21,7 @@ func StoreContractCode(typeName string, codeId string) {
 
 func StoreContractAddress(typeName string, contractAddr string, codeType string, codeId string) {
 
-	jsonData := contractAddressJsonStruct{
+	jsonData := cns.ContractAddressJsonStruct{
 		TypeName:        typeName,
 		ContractAddress: contractAddr,
 		CodeType:        codeType,
@@ -49,12 +37,8 @@ func StoreContractAddress(typeName string, contractAddr string, codeType string,
 func DefaultCnsContractInstantiateMsg() cns.InstantiateMsgStruct {
 	denom := util.GetConfig().Get("denom")
 
-	var contractCodeJsonStruct contractCodeJsonStruct
-	contractCodeData := util.JsonUnmarshal(contractCodeJsonStruct, "./contract/info/contractCode.json")
-	mapstructure.Decode(contractCodeData, &contractCodeJsonStruct)
-
 	instantiateMsgData := cns.InstantiateMsgStruct{
-		CodeId:  contractCodeJsonStruct.CodeId,
+		CodeId:  cnsClientParse.CnsContractConv("code").ContractCodeJsonStruct.CodeId,
 		Amount:  "0" + denom,
 		Label:   "contract inst",
 		InitMsg: "{\"owner\":\"" + cns.GatewayAccount + "\"}",
@@ -67,19 +51,13 @@ func DefaultCnsContractInstantiateMsg() cns.InstantiateMsgStruct {
 func CnsContractExecuteMsg(body []byte) cns.ExecuteMsgStruct {
 	denom := util.GetConfig().Get("denom")
 
-	var contractAddressJsonStruct contractAddressJsonStruct
-	contractAddressData := util.JsonUnmarshal(contractAddressJsonStruct, "./contract/info/contractAddress.json")
-	mapstructure.Decode(contractAddressData, &contractAddressJsonStruct)
-
-	var domainMappingRequest cns.DomainMappingRequest
-	domainMappingRequestData := util.JsonUnmarshalData(domainMappingRequest, body)
-	mapstructure.Decode(domainMappingRequestData, &domainMappingRequest)
+	c := cnsClientParse.CnsContractConv("address").DomainMapConv(body)
 
 	executeMsgData := cns.ExecuteMsgStruct{
-		ContractAddress: contractAddressJsonStruct.ContractAddress,
+		ContractAddress: c.ContractAddressJsonStruct.ContractAddress,
 		Amount:          "0" + denom,
-		ExecMsg: "{\"save_domain_address_mapping\":{\"domain\":\"" + domainMappingRequest.DomainName +
-			"\",\"account_address\":\"" + domainMappingRequest.AccountAddress + "\"}}",
+		ExecMsg: "{\"save_domain_address_mapping\":{\"domain\":\"" + c.DomainMappingRequest.DomainName +
+			"\",\"account_address\":\"" + c.DomainMappingRequest.AccountAddress + "\"}}",
 	}
 
 	return executeMsgData
@@ -88,17 +66,11 @@ func CnsContractExecuteMsg(body []byte) cns.ExecuteMsgStruct {
 //-- Only for CNS, query message
 func CnsContractQueryDomainMsg(body []byte) cns.QueryMsgStruct {
 
-	var contractAddressJsonStruct contractAddressJsonStruct
-	contractAddressData := util.JsonUnmarshal(contractAddressJsonStruct, "./contract/info/contractAddress.json")
-	mapstructure.Decode(contractAddressData, &contractAddressJsonStruct)
-
-	var domainMappingRequest cns.DomainMappingRequest
-	domainMappingRequestData := util.JsonUnmarshalData(domainMappingRequest, body)
-	mapstructure.Decode(domainMappingRequestData, &domainMappingRequest)
+	c := cnsClientParse.CnsContractConv("address").DomainMapConv(body)
 
 	queryMsgData := cns.QueryMsgStruct{
-		ContractAddress: contractAddressJsonStruct.ContractAddress,
-		QueryMsg:        "{\"domain_mapping\":{\"domain\":\"" + domainMappingRequest.DomainName + "\"}}",
+		ContractAddress: c.ContractAddressJsonStruct.ContractAddress,
+		QueryMsg:        "{\"domain_mapping\":{\"domain\":\"" + c.DomainMappingRequest.DomainName + "\"}}",
 	}
 
 	return queryMsgData
@@ -107,18 +79,11 @@ func CnsContractQueryDomainMsg(body []byte) cns.QueryMsgStruct {
 //-- Only for CNS, query message
 func CnsContractQueryAccountMsg(body []byte) cns.QueryMsgStruct {
 
-	var contractAddressJsonStruct contractAddressJsonStruct
-	contractAddressData := util.JsonUnmarshal(contractAddressJsonStruct, "./contract/info/contractAddress.json")
-	mapstructure.Decode(contractAddressData, &contractAddressJsonStruct)
-
-	var domainMappingRequest cns.DomainMappingRequest
-	domainMappingRequestData := util.JsonUnmarshalData(domainMappingRequest, body)
-	mapstructure.Decode(domainMappingRequestData, &domainMappingRequest)
+	c := cnsClientParse.CnsContractConv("address").DomainMapConv(body)
 
 	queryMsgData := cns.QueryMsgStruct{
-		ContractAddress: contractAddressJsonStruct.ContractAddress,
-		QueryMsg:        "{\"account_mapping\":{\"account_address\":\"" + domainMappingRequest.AccountAddress + "\"}}",
-	}
+		ContractAddress: c.ContractAddressJsonStruct.ContractAddress,
+		QueryMsg:        "{\"account_mapping\":{\"account_address\":\"" + c.DomainMappingRequest.AccountAddress + "\"}}"}
 
 	return queryMsgData
 }

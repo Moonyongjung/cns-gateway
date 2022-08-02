@@ -10,8 +10,6 @@ import (
 	"github.com/Moonyongjung/cns-gw/msg"
 	cns "github.com/Moonyongjung/cns-gw/types"
 	"github.com/Moonyongjung/cns-gw/util"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 func DomainMapping(userAccount string) []byte {
@@ -28,8 +26,8 @@ func DomainMapping(userAccount string) []byte {
 		}
 
 	} else {
-		responseData := util.HttpResponseByte(109, "", "")
-		return responseData
+		responseByte := util.HttpResponseByte(109, "", "")
+		return responseByte
 	}
 }
 
@@ -38,7 +36,7 @@ func DomainConfirm(requestData string) []byte {
 	userAccount := data[0]
 	domainName := data[1]
 
-	isExist := domainExistCheck([]byte(domainName))
+	isExist, _ := domainExistCheck([]byte(domainName))
 	if isExist {
 		responseByte := util.HttpResponseByte(107, "", "")
 		return responseByte
@@ -58,16 +56,7 @@ func DomainConfirm(requestData string) []byte {
 		responseBody := rest.HttpClient("POST", url, jsonData)
 		util.LogGw(string(responseBody))
 
-		var httpResponseStruct cns.HttpResponseStruct
-		httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
-		mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
-
-		responseByte, err := util.JsonMarshalData(httpResponseStruct)
-		if err != nil {
-			util.LogErr(err)
-		}
-
-		return responseByte
+		return responseBody
 	}
 }
 
@@ -76,31 +65,13 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 	domainName := data[0]
 	amount := data[1]
 
-	isExist := domainExistCheck([]byte(domainName))
+	isExist, domainQueryHttpResponse := domainExistCheck([]byte(domainName))
 	if !isExist {
 		responseByte := util.HttpResponseByte(111, "", "")
 		return responseByte
 
 	} else {
-		gatewayServerPort := util.GetConfig().Get("gatewayServerPort")
-		url := "http://localhost:" + gatewayServerPort + "/api/wasm/cns-query-by-domain"
-		domainMappingRequest := cns.DomainMappingRequest{
-			DomainName: domainName,
-			// AccountAddress: userAccount,
-		}
-		jsonData, err := util.JsonMarshalData(domainMappingRequest)
-		if err != nil {
-			util.LogErr(err)
-		}
-
-		responseBody := rest.HttpClient("POST", url, jsonData)
-		util.LogGw("Send inquiry, domain check :", string(responseBody))
-
-		var httpResponseStruct cns.HttpResponseStruct
-		httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
-		mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
-
-		if httpResponseStruct.ResCode != 0 {
+		if domainQueryHttpResponse.ResCode != 0 {
 			responseByte := util.HttpResponseByte(111, "", "")
 			return responseByte
 		} else {
@@ -108,9 +79,12 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 			pk := util.GetPriKeyByArmor(pkArmor)
 			fromAddr := util.GetAddrByPrivKey(pk)
 			accNum, _, _ := rest.GetAccountInfoHttpClient(fromAddr.String())
+			if accNum == "" {
+				return util.HttpResponseByte(112, "", "")
+			}
 			var contractMsg msg.ContractMsg
 
-			splitData := strings.Split(httpResponseStruct.ResData, ":")
+			splitData := strings.Split(domainQueryHttpResponse.ResData, ":")
 			convertStr := strings.Replace(splitData[2], "\"", "", -1)
 			toAddr := strings.Replace(convertStr, "}", "", -1)
 
@@ -125,9 +99,7 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 			if err != nil {
 				util.LogErr(err)
 			}
-
 			_, httpResponse := bc.TxCreate(pk, accNum, userClient, msg, "bank")
-
 			responseByte := util.HttpResponseByte(httpResponse.ResCode, httpResponse.ResMsg, httpResponse.ResData)
 
 			return responseByte
@@ -135,7 +107,7 @@ func SendInquiry(requestData string, pkArmor string) []byte {
 	}
 }
 
-func domainExistCheck(requestData []byte) bool {
+func domainExistCheck(requestData []byte) (bool, cns.HttpResponseStruct) {
 	gatewayServerPort := util.GetConfig().Get("gatewayServerPort")
 	url := "http://localhost:" + gatewayServerPort + "/api/wasm/query"
 
@@ -157,14 +129,12 @@ func domainExistCheck(requestData []byte) bool {
 	responseBody := rest.HttpClient("POST", url, queryMsgDataJson)
 	util.LogGw("Domain exist check : ", string(responseBody))
 
-	var httpResponseStruct cns.HttpResponseStruct
-	httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
-	mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
+	httpResponseStruct := util.HttpResonseByteToStruct(responseBody)
 
 	if httpResponseStruct.ResCode == 0 {
-		return true
+		return true, httpResponseStruct
 	} else {
-		return false
+		return false, cns.HttpResponseStruct{}
 	}
 }
 
@@ -190,9 +160,7 @@ func alreadyAccountMappingCheck(requestData []byte) bool {
 	responseBody := rest.HttpClient("POST", url, queryMsgDataJson)
 	util.LogGw("Already account mapped check : ", string(responseBody))
 
-	var httpResponseStruct cns.HttpResponseStruct
-	httpResponseStructData := util.JsonUnmarshalData(httpResponseStruct, responseBody)
-	mapstructure.Decode(httpResponseStructData, &httpResponseStruct)
+	httpResponseStruct := util.HttpResonseByteToStruct(responseBody)
 
 	if httpResponseStruct.ResCode == 0 {
 		return true

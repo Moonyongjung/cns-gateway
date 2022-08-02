@@ -41,6 +41,7 @@ func HttpClient(method string, url string, body []byte) []byte {
 				InsecureSkipVerify: true,
 			},
 		},
+		Timeout: 60 * time.Second,
 	}
 	hClient.Timeout = time.Second * 30
 	defer func() {

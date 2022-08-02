@@ -15,7 +15,7 @@ func HttpServerInit(channel cns.ChannelStruct) {
 			channel.HttpServerChan <- res
 
 		case queryRes := <-channel.QueryResponseChan:
-			res := util.HttpResponseByte(0, queryRes, "")
+			res := util.HttpResponseByte(0, "", queryRes)
 			channel.HttpServerChan <- res
 
 		case err := <-channel.ErrorChan:
